@@ -171,10 +171,24 @@ public class AlarmActivity extends RingtoneActivity<Alarm> {
                 Log.d("MainActivity", "Cancelled scan");
                 Toast.makeText(this, "Cancelled", Toast.LENGTH_LONG).show();
             } else {
-                mAlarmController.cancelAlarm(getRingingObject(), false, true);
-                stopAndFinish();
-                Log.d("MainActivity", "Scanned");
-                Toast.makeText(this, "Scanned: " + result.getContents(), Toast.LENGTH_LONG).show();
+                if(result.getContents().contains("The Most Reliable Alarm says good morning!")){
+                    mAlarmController.cancelAlarm(getRingingObject(), false, true);
+                    Log.d("MainActivity", "Scanned");
+                    Toast.makeText(this, result.getContents(), Toast.LENGTH_LONG).show();
+                    stopAndFinish();
+                }else{
+                    Log.d("MainActivity", "Scanned");
+                    Toast.makeText(this, "Wrong QR: " + result.getContents(), Toast.LENGTH_LONG).show();
+                    IntentIntegrator integrator = new IntentIntegrator(this);
+                    integrator.setDesiredBarcodeFormats(IntentIntegrator.ALL_CODE_TYPES);
+                    integrator.setPrompt("Scan");
+                    integrator.setCameraId(0);
+                    integrator.setBeepEnabled(false);
+                    integrator.setBarcodeImageEnabled(false);
+                    integrator.initiateScan();
+                }
+
+
             }
         }
 
