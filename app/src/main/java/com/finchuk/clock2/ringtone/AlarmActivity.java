@@ -25,7 +25,9 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.v4.app.NotificationCompat;
+import android.util.Log;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import com.finchuk.clock2.alarms.Alarm;
 import com.finchuk.clock2.alarms.misc.AlarmController;
@@ -33,6 +35,8 @@ import com.finchuk.clock2.ringtone.playback.RingtoneService;
 import com.finchuk.clock2.util.TimeFormatUtils;
 import com.finchuk.clock2.R;
 import com.finchuk.clock2.ringtone.playback.AlarmRingtoneService;
+import com.google.zxing.integration.android.IntentIntegrator;
+import com.google.zxing.integration.android.IntentResult;
 
 public class AlarmActivity extends RingtoneActivity<Alarm> {
     private static final String TAG = "AlarmActivity";
@@ -115,6 +119,7 @@ public class AlarmActivity extends RingtoneActivity<Alarm> {
 
     @Override
     protected void onLeftButtonClick() {
+
         mAlarmController.snoozeAlarm(getRingingObject());
         // Can't call dismiss() because we don't want to also call cancelAlarm()! Why? For example,
         // we don't want the alarm, if it has no recurrence, to be turned off right now.
@@ -124,8 +129,14 @@ public class AlarmActivity extends RingtoneActivity<Alarm> {
     @Override
     protected void onRightButtonClick() {
         // TODO do we really need to cancel the intent and alarm?
-        mAlarmController.cancelAlarm(getRingingObject(), false, true);
-        stopAndFinish();
+        IntentIntegrator integrator = new IntentIntegrator(this);
+        integrator.setDesiredBarcodeFormats(IntentIntegrator.ALL_CODE_TYPES);
+        integrator.setPrompt("Scan");
+        integrator.setCameraId(0);
+        integrator.setBeepEnabled(false);
+        integrator.setBarcodeImageEnabled(false);
+        integrator.initiateScan();
+
     }
 
     @Override
@@ -150,5 +161,22 @@ public class AlarmActivity extends RingtoneActivity<Alarm> {
                 .setSmallIcon(R.drawable.ic_alarm_24dp)
                 .build();
         mNotificationManager.notify(TAG, getRingingObject().getIntId(), note);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        IntentResult result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
+        if(result != null) {
+            if(result.getContents() == null) {
+                Log.d("MainActivity", "Cancelled scan");
+                Toast.makeText(this, "Cancelled", Toast.LENGTH_LONG).show();
+            } else {
+                mAlarmController.cancelAlarm(getRingingObject(), false, true);
+                stopAndFinish();
+                Log.d("MainActivity", "Scanned");
+                Toast.makeText(this, "Scanned: " + result.getContents(), Toast.LENGTH_LONG).show();
+            }
+        }
+
     }
 }
