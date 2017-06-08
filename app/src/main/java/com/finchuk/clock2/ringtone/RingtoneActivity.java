@@ -23,6 +23,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Parcelable;
 import android.support.annotation.DrawableRes;
 import android.support.annotation.StringRes;
@@ -33,10 +34,16 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.finchuk.clock2.MainActivity;
 import com.finchuk.clock2.ringtone.playback.RingtoneService;
 import com.finchuk.clock2.util.LocalBroadcastHelper;
 import com.finchuk.clock2.util.ParcelableUtil;
 import com.finchuk.clock2.BaseActivity;
+
+import java.io.File;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
@@ -127,7 +134,7 @@ public abstract class RingtoneActivity<T extends Parcelable> extends BaseActivit
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED);
 
-        mHeaderTitle.setText(getHeaderTitle()); // TOneverDO: call before assigning mRingingObject
+        mHeaderTitle.setText(getHeaderTitle()+"\n Weather: "+ MainActivity.weather.type+"\n Temperature: "+ MainActivity.weather.temp); // TOneverDO: call before assigning mRingingObject
         getHeaderContent((LinearLayout) findViewById(com.finchuk.clock2.R.id.header));
         mAutoSilencedText.setCompoundDrawablesWithIntrinsicBounds(0, getAutoSilencedDrawable(), 0, 0);
         mAutoSilencedText.setText(getAutoSilencedText());

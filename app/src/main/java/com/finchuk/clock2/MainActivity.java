@@ -49,6 +49,18 @@ import com.finchuk.clock2.stopwatch.ui.StopwatchFragment;
 import com.finchuk.clock2.timepickers.Utils;
 import com.finchuk.clock2.timers.ui.TimersFragment;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.nio.charset.Charset;
+
 import butterknife.Bind;
 
 import static com.finchuk.clock2.list.RecyclerViewFragment.ACTION_SCROLL_TO_STABLE_ID;
@@ -56,6 +68,7 @@ import static com.finchuk.clock2.list.RecyclerViewFragment.EXTRA_SCROLL_TO_STABL
 
 public class MainActivity extends BaseActivity {
     private static final String TAG = "MainActivity";
+    public static Weather weather = new Weather();
 
     public static final int    PAGE_ALARMS          = 0;
     public static final int    PAGE_TIMERS          = 1;
@@ -96,6 +109,27 @@ public class MainActivity extends BaseActivity {
             }
         });
 
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (true){
+                    try {
+                        Weather w = readWeather();
+                        if(w!=null){
+                            weather=w;
+                        }
+                    }finally {
+                        try {
+                            Thread.sleep(10000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+
+
+                }
+            }
+        }).start();
         mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
         mViewPager.setAdapter(mSectionsPagerAdapter);
         mViewPager.addOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
@@ -375,5 +409,54 @@ public class MainActivity extends BaseActivity {
         public Fragment getFragment(int position) {
             return mFragments.get(position);
         }
+    }
+
+    public static class Weather {
+
+        public double temp;
+        public String type;
+    }
+    public Weather readWeather(){
+        JSONObject resp = readJson();
+        try {
+            JSONObject curr = resp.getJSONObject("currently");
+            Weather weather = new Weather();
+            weather.type=curr.getString("icon");
+            weather.temp=curr.getDouble("temperature");
+            return weather;
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return new Weather();
+    }
+
+    private String readAll(Reader reader) throws IOException {
+        StringBuilder stringBuilder = new StringBuilder();
+        int ch;
+        while ((ch = reader.read()) != -1) {
+            stringBuilder.append((char) ch);
+        }
+        return stringBuilder.toString();
+    }
+
+    public JSONObject readJson() {
+        JSONObject json = null;
+        BufferedReader bufferReader;
+        String jsonText;
+        try {
+            InputStream inputStream = new URL("https://api.darksky.net/forecast/227df50bd4b2c09545e1eaf9754c955b/50.4333000,30.516715632").openStream();
+            InputStreamReader inputStreamReader = new InputStreamReader(inputStream, Charset.forName("UTF8"));
+            bufferReader = new BufferedReader(inputStreamReader);
+            jsonText = readAll(bufferReader);
+            json = new JSONObject(jsonText);
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return json;
+
     }
 }
